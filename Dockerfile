@@ -45,5 +45,7 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD python -c "import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:' + os.getenv('PORT', '8000') + '/health', timeout=3).read()" || exit 1
 
-# Shell form để ${PORT} được nội suy lúc chạy (Railway/Render tự gán PORT)
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Qua `sh -c` để ${PORT} được nội suy lúc chạy (Railway/Render tự gán PORT).
+# `exec` để uvicorn thay chỗ sh làm PID 1 và nhận SIGTERM trực tiếp — sh
+# không chuyển tiếp tín hiệu, container sẽ bị SIGKILL thay vì tắt êm.
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
